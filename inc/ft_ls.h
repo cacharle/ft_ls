@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 11:48:11 by charles           #+#    #+#             */
-/*   Updated: 2020/05/17 17:24:05 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/17 18:28:27 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,10 +64,16 @@ struct s_file_type_letter
 t_flags				flags_extract(int argc, char **argv);
 
 
-bool				entry_push(char *filename, t_ftdstr *out, t_flags flags);
+bool				entry_push(char *filename, struct stat *statbuf, t_ftdstr *out, t_flags flags, unsigned int padding);
 bool				entries_push(t_ftvec *filenames, struct stat *stats, t_ftdstr *out, t_flags flags);
 
 // void				date_init(const time_t *timep, t_date *date);
 char				*date_str(const time_t *timep);
+
+/*
+** order.c
+*/
+
+void				order_filenames(t_ftvec *filenames, struct stat *stats, t_flags flags);
 
 #endif
