@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 15:07:46 by charles           #+#    #+#             */
-/*   Updated: 2020/05/16 21:15:43 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/17 14:27:42 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 static char					*st_basename(char *path)
 {
 	char	*slash_ptr;
+
+	return path;
 
 	if (ft_strequ(path, "/"))
 		return (path);
@@ -77,19 +79,22 @@ bool						entry_push(char *filename, t_ftdstr *out, t_flags flags)
 	{
 		if (stat(filename, &statbuf) < 0
 			|| (usr_result = getpwuid(statbuf.st_uid)) == NULL
-			|| (grp_result = getgrgid(statbuf.st_uid)) == NULL)
+			|| (grp_result = getgrgid(statbuf.st_gid)) == NULL)
 			return (false);
 		st_fill_mode(mode_str, statbuf.st_mode);
-		ft_asprintf(&tmp, " %d %s %s %lu %s ",
+		if (ft_asprintf(&tmp, " %d %s %s %lu %s ",
 				statbuf.st_nlink,
 				usr_result->pw_name,
 				grp_result->gr_name,
 				statbuf.st_size,
-				"some date");
-		ft_dstrpush(out, mode_str);
-		ft_dstrpush(out, tmp);
+				"some date") == -1)
+			return (false);
+		if (ft_dstrpush(out, mode_str) == NULL
+			|| ft_dstrpush(out, tmp) == NULL)
+			return (false);
 	}
-	ft_dstrpush(out, st_basename(filename));
-	ft_dstrpush(out, "\n");
+	if (ft_dstrpush(out, st_basename(filename)) == NULL
+		|| ft_dstrpush(out, "\n") == NULL)
+		return (false);
 	return (true);
 }

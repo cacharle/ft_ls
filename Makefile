@@ -6,7 +6,7 @@
 #    By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/16 11:42:25 by charles           #+#    #+#              #
-#    Updated: 2020/05/16 11:52:38 by charles          ###   ########.fr        #
+#    Updated: 2020/05/17 15:29:04 by charles          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,6 +32,9 @@ SRC = $(shell find $(SRC_DIR) -type f -name '*.c')
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 all: prebuild libft_all $(NAME)
+
+debug: OFLAG = -g
+debug: all
 
 prebuild:
 	@mkdir -p $(OBJ_DIR)

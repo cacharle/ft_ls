@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 11:38:02 by charles           #+#    #+#             */
-/*   Updated: 2020/05/16 21:14:02 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/17 13:24:20 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,32 +23,38 @@ static int	st_compar_time(const void *f1, const void *f2)
 
 t_ftvec	*extract_dirs(t_ftvec *files)
 {
-	size_t	i;
-	t_ftvec	*dirs;
+	size_t		i;
+	t_ftvec		*dirs;
 	struct stat	statbuf;
 
-	dirs = ft_vecnew(32);
+	if ((dirs = ft_vecnew(32)) == NULL)
+		return (NULL);
 	i = 0;
 	while (i < files->size)
 	{
-		stat(files->data[i], &statbuf);
+		if (stat(files->data[i], &statbuf) == -1)
+			return (NULL);
 		if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
-			ft_vecpush(dirs, files->data[i]);
+			if (ft_vecpush(dirs, files->data[i]) == NULL)
+				return (NULL);
 		i++;
 	}
 	return (dirs);
 }
 
-void	dirs_push(t_ftvec *dirs, t_ftdstr *out, t_flags flags);
+bool	dirs_push(t_ftvec *dirs, t_ftdstr *out, t_flags flags);
 
-void	files_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
+bool	files_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
 {
 	size_t	i;
 	t_ftvec	*dirs;
 
+	if (files->size == 0)
+		return (true);
 	if (flags & FLAG_RECURSION)
 	{
-		dirs = extract_dirs(files);
+		if ((dirs = extract_dirs(files)) == NULL)
+			return (false);
 	}
 	ft_vecsort(files, flags & FLAG_TIME ? st_compar_time : (t_ftcompar_func)ft_strcmp);
 	if (flags & FLAG_REVERSE)
@@ -56,14 +62,16 @@ void	files_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
 	i = 0;
 	while (i < files->size)
 	{
-		entry_push(files->data[i], out, flags);
+		if (!entry_push(files->data[i], out, flags))
+			return (false);
 		i++;
 	}
 	if (flags & FLAG_RECURSION)
-		dirs_push(dirs, out, flags);
+		return (dirs_push(dirs, out, flags));
+	return (true);
 }
 
-void	dirs_push(t_ftvec *dirs, t_ftdstr *out, t_flags flags)
+bool	dirs_push(t_ftvec *dirs, t_ftdstr *out, t_flags flags)
 {
 	DIR				*dir;
 	struct dirent	*entry;
@@ -73,59 +81,71 @@ void	dirs_push(t_ftvec *dirs, t_ftdstr *out, t_flags flags)
 	i = 0;
 	while (i < dirs->size)
 	{
-		dir = opendir(dirs->data[i]);
-		files = ft_vecnew(32);
+		if ((dir = opendir(dirs->data[i])) == NULL
+			|| (files = ft_vecnew(32)) == NULL)
+			return (false);
 		while ((entry = readdir(dir)) != NULL)
 		{
-			if (ft_strequ(entry->d_name, ".") || ft_strequ(entry->d_name, ".."))
+			if (entry->d_name[0] == '.')
 				continue ;
-			ft_vecpush_safe(files, ft_strjoin3(dirs->data[i], "/", entry->d_name));
+			if (ft_vecpush_safe(files, ft_strjoin3(dirs->data[i], "/", entry->d_name)) == NULL)
+				return (false);
 		}
 		closedir(dir);
-		ft_dstrpush(out, "\n");
-		ft_dstrpush(out, dirs->data[i]);
-		ft_dstrpush(out, ":\n");
-		files_push(files, out, flags);
+		if (ft_dstrpush(out, "\n") == NULL
+			|| ft_dstrpush(out, dirs->data[i]) == NULL
+			|| ft_dstrpush(out, ":\n") == NULL
+			|| !files_push(files, out, flags))
+			return (false);
 		i++;
 	}
+	return (true);
 }
 
-void	entrypoint_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
+bool	entrypoint_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
 {
 	size_t	i;
 	t_ftvec	*dirs;
 
-	dirs = extract_dirs(files);
-
+	if ((dirs = extract_dirs(files)) == NULL)
+		return (false);
 	ft_vecsort(files, flags & FLAG_TIME ? st_compar_time : (t_ftcompar_func)ft_strcmp);
 	if (flags & FLAG_REVERSE)
 		ft_vecreverse(files);
 	i = 0;
 	while (i < files->size)
 	{
-		entry_push(files->data[i], out, flags);
+		if (!entry_push(files->data[i], out, flags))
+			return (NULL);
 		i++;
 	}
-	dirs_push(dirs, out, flags);
+	return (dirs_push(dirs, out, flags));
 }
 
 int main(int argc, char **argv)
 {
-	t_flags flags;
-	t_ftvec	*files;
+	t_flags		flags;
+	t_ftvec		*files;
+	t_ftdstr	*out;
+	int			i;
 
 	if ((flags = flags_extract(argc, argv)) & FLAG_ERROR)
 		return (1);
-
-	files = ft_vecnew(256);
-	int i = 1;
+	if ((files = ft_vecnew(256)) == NULL
+		|| (out = ft_dstrnew_empty(FT_LS_OUT_SIZE)) == NULL)
+		return (1);
+	i = 1;
 	while (argv[i] != NULL)
 	{
-		ft_vecpush(files, ft_strdup(argv[i]));
-		i++;
+		if (argv[i][ft_strlen(argv[i]) - 1] == '/')
+			argv[i][ft_strlen(argv[i]) - 1] = '\0';
+		ft_vecpush(files, ft_strdup(argv[i++]));
 	}
-	t_ftdstr *out = ft_dstrnew("");
-	entrypoint_push(files, out, flags);
+	if (!entrypoint_push(files, out, flags))
+	{
+		perror(NULL);
+		return (1);
+	}
 	ft_putstr(out->str);
 	return 0;
 }
