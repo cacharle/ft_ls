@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 11:38:02 by charles           #+#    #+#             */
-/*   Updated: 2020/05/17 13:24:20 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/17 17:18:38 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,26 @@ static int	st_compar_time(const void *f1, const void *f2)
 	(void)f1;
 	(void)f2;
 	return 0;
+}
+
+struct stat	*load_files(t_ftvec *filenames)
+{
+	size_t		i;
+	struct stat	*stats;
+
+	if ((stats = malloc(sizeof(struct stat) * filenames->size)) == NULL)
+		return (NULL);
+	i = 0;
+	while (i < filenames->size)
+	{
+		if (stat(filename->data[i], stats + i) == -1)
+		{
+			free(stats);
+			return (NULL);
+		}
+		i++;
+	}
+	return (stats);
 }
 
 t_ftvec	*extract_dirs(t_ftvec *files)
@@ -56,16 +76,17 @@ bool	files_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
 		if ((dirs = extract_dirs(files)) == NULL)
 			return (false);
 	}
-	ft_vecsort(files, flags & FLAG_TIME ? st_compar_time : (t_ftcompar_func)ft_strcmp);
+	ft_vecsort(files, /*flags & FLAG_TIME ? st_compar_time : */(t_ftcompar_func)ft_strcmp);
 	if (flags & FLAG_REVERSE)
 		ft_vecreverse(files);
 	i = 0;
-	while (i < files->size)
-	{
-		if (!entry_push(files->data[i], out, flags))
-			return (false);
-		i++;
-	}
+	entries_push(files, load_files(files));
+	/* while (i < files->size) */
+	/* { */
+	/* 	if (!entry_push(files->data[i], out, flags)) */
+	/* 		return (false); */
+	/* 	i++; */
+	/* } */
 	if (flags & FLAG_RECURSION)
 		return (dirs_push(dirs, out, flags));
 	return (true);
@@ -107,11 +128,11 @@ bool	entrypoint_push(t_ftvec *files, t_ftdstr *out, t_flags flags)
 	size_t	i;
 	t_ftvec	*dirs;
 
-	if ((dirs = extract_dirs(files)) == NULL)
-		return (false);
-	ft_vecsort(files, flags & FLAG_TIME ? st_compar_time : (t_ftcompar_func)ft_strcmp);
+	ft_vecsort(files, /*flags & FLAG_TIME ? st_compar_time : */(t_ftcompar_func)ft_strcmp);
 	if (flags & FLAG_REVERSE)
 		ft_vecreverse(files);
+	if ((dirs = extract_dirs(files)) == NULL)
+		return (false);
 	i = 0;
 	while (i < files->size)
 	{
@@ -147,5 +168,7 @@ int main(int argc, char **argv)
 		return (1);
 	}
 	ft_putstr(out->str);
+	ft_dstrdestroy(out);
+	ft_vecdestroy(files, free);
 	return 0;
 }

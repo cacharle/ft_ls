@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 15:07:46 by charles           #+#    #+#             */
-/*   Updated: 2020/05/17 14:27:42 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/17 17:21:53 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,13 +18,11 @@ static char					*st_basename(char *path)
 {
 	char	*slash_ptr;
 
-	return path;
-
-	if (ft_strequ(path, "/"))
+	if (path[0] == '/' && path[1] == '\0')
 		return (path);
 	if ((slash_ptr = ft_strrchr(path, '/')) == NULL)
 		return (path);
-	return slash_ptr + 1;
+	return (slash_ptr + 1);
 }
 
 struct s_file_type_letter	g_file_types[] = {
@@ -67,19 +65,19 @@ static void					st_fill_mode(char mode_str[MODE_SIZE], mode_t mode)
 ** permissiosn links user group size date filename [-> linked]
 */
 
-bool						entry_push(char *filename, t_ftdstr *out, t_flags flags)
+bool						entry_push(char *filename, struct stat *statbuf, t_ftdstr *out, t_flags flags)
 {
 	char			*tmp;
 	char			mode_str[MODE_SIZE];
-	struct stat		statbuf;
 	struct passwd	*usr_result;
 	struct group	*grp_result;
+	char			*date;
 
 	if (flags & FLAG_LIST)
 	{
-		if (stat(filename, &statbuf) < 0
-			|| (usr_result = getpwuid(statbuf.st_uid)) == NULL
-			|| (grp_result = getgrgid(statbuf.st_gid)) == NULL)
+		if ((usr_result = getpwuid(statbuf.st_uid)) == NULL
+			|| (grp_result = getgrgid(statbuf.st_gid)) == NULL
+			|| (date = date_str(&statbuf.st_mtim.tv_sec)) == NULL)
 			return (false);
 		st_fill_mode(mode_str, statbuf.st_mode);
 		if (ft_asprintf(&tmp, " %d %s %s %lu %s ",
@@ -87,14 +85,29 @@ bool						entry_push(char *filename, t_ftdstr *out, t_flags flags)
 				usr_result->pw_name,
 				grp_result->gr_name,
 				statbuf.st_size,
-				"some date") == -1)
+				date) == -1)
 			return (false);
 		if (ft_dstrpush(out, mode_str) == NULL
 			|| ft_dstrpush(out, tmp) == NULL)
 			return (false);
+		free(tmp);
 	}
 	if (ft_dstrpush(out, st_basename(filename)) == NULL
 		|| ft_dstrpush(out, "\n") == NULL)
 		return (false);
+	return (true);
+}
+
+bool	entries_push(t_ftvec *filenames, struct stat *stats, t_ftdstr *out, t_flags flags)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < filenames->size)
+	{
+		if (!entry_push(filenames->data[i], stats + i, out, flags))
+			return (false);
+		i++;
+	}
 	return (true);
 }

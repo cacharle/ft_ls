@@ -6,7 +6,7 @@
 #    By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/16 11:42:25 by charles           #+#    #+#              #
-#    Updated: 2020/05/17 15:29:04 by charles          ###   ########.fr        #
+#    Updated: 2020/05/17 16:51:47 by charles          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,7 @@ INC_DIR = inc
 OBJ_DIR = obj
 
 CC = gcc
-OFLAG ?= -O0
+OFLAG ?= -g
 CCFLAGS = $(OFLAG) -I$(INC_DIR) -I$(LIBFT_DIR)/include \
 		  -Wall -Wextra #-Werror
 LDFLAGS = -L$(LIBFT_DIR) -lft

@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 11:48:11 by charles           #+#    #+#             */
-/*   Updated: 2020/05/16 19:24:48 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/17 17:24:05 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <dirent.h>
 # include <grp.h>
 # include <pwd.h>
+# include <time.h>
 
 # include "libft.h"
 # include "libft_printf.h"
@@ -42,11 +43,13 @@
 
 typedef uint8_t	t_flags;
 
-/*
-** flags.c
-*/
-
-t_flags	flags_extract(int argc, char **argv);
+// typedef struct
+// {
+// 	char			*month_str;
+// 	unsigned int	day;
+// 	unsigned int	hour;
+// 	unsigned int	min;
+// }					t_date;
 
 struct s_file_type_letter
 {
@@ -54,6 +57,17 @@ struct s_file_type_letter
 	char	letter;
 };
 
-bool						entry_push(char *filename, t_ftdstr *out, t_flags flags);
+/*
+** flags.c
+*/
+
+t_flags				flags_extract(int argc, char **argv);
+
+
+bool				entry_push(char *filename, t_ftdstr *out, t_flags flags);
+bool				entries_push(t_ftvec *filenames, struct stat *stats, t_ftdstr *out, t_flags flags);
+
+// void				date_init(const time_t *timep, t_date *date);
+char				*date_str(const time_t *timep);
 
 #endif
