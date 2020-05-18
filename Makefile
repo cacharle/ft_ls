@@ -6,7 +6,7 @@
 #    By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/05/16 11:42:25 by charles           #+#    #+#              #
-#    Updated: 2020/05/17 16:51:47 by charles          ###   ########.fr        #
+#    Updated: 2020/05/18 10:45:17 by charles          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -31,7 +31,7 @@ INC = $(shell find $(INC_DIR) -type f -name '*.h')
 SRC = $(shell find $(SRC_DIR) -type f -name '*.c')
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-all: prebuild libft_all $(NAME)
+all: prebuild $(NAME)
 
 debug: OFLAG = -g
 debug: all
@@ -39,7 +39,7 @@ debug: all
 prebuild:
 	@mkdir -p $(OBJ_DIR)
 
-$(NAME): $(OBJ)
+$(NAME): $(OBJ) libft_all
 	@echo "Linking: $@"
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 

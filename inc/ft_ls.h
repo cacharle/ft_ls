@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 11:48:11 by charles           #+#    #+#             */
-/*   Updated: 2020/05/17 18:28:27 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/18 16:17:01 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,37 +43,52 @@
 
 typedef uint8_t	t_flags;
 
-// typedef struct
-// {
-// 	char			*month_str;
-// 	unsigned int	day;
-// 	unsigned int	hour;
-// 	unsigned int	min;
-// }					t_date;
-
-struct s_file_type_letter
+struct			s_file_type_letter
 {
-	mode_t	type;
-	char	letter;
+	mode_t		type;
+	char		letter;
 };
 
+typedef struct
+{
+	size_t		size;
+	t_ftvec		*names;
+	struct stat	*stats;
+}				t_files;
+
 /*
-** flags.c
+** args.c
 */
 
-t_flags				flags_extract(int argc, char **argv);
+t_flags			args_extract_flags(int argc, char **argv);
 
+/*
+** entry.c
+*/
 
-bool				entry_push(char *filename, struct stat *statbuf, t_ftdstr *out, t_flags flags, unsigned int padding);
-bool				entries_push(t_ftvec *filenames, struct stat *stats, t_ftdstr *out, t_flags flags);
-
-// void				date_init(const time_t *timep, t_date *date);
-char				*date_str(const time_t *timep);
+bool			entries_push(t_files *files, t_ftdstr *out, t_flags flags);
 
 /*
 ** order.c
 */
 
-void				order_filenames(t_ftvec *filenames, struct stat *stats, t_flags flags);
+void			order_files(t_files *files, t_flags flags);
+
+/*
+** files.c
+*/
+
+bool			files_init(t_files *files, t_ftvec *filenames);
+void			files_quit(t_files *files);
+unsigned int	files_reduce_stats(t_files *files, unsigned int (*f)(struct stat*, unsigned int));
+t_ftvec			*files_extract_dirnames(t_files *files);
+void			files_remove_dirs(t_files *files);
+
+/*
+** push.c
+*/
+
+bool			push_dirs(t_ftvec *dirnames, t_ftdstr *out, t_flags flags);
+bool			push_files(t_ftvec *filenames, t_ftdstr *out, t_flags flags);
 
 #endif

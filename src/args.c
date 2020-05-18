@@ -1,18 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   flags.c                                            :+:      :+:    :+:   */
+/*   args.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 11:59:55 by charles           #+#    #+#             */
-/*   Updated: 2020/05/16 19:16:38 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/18 13:53:29 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_ls.h"
 
-t_flags	flags_extract(int argc, char **argv)
+t_flags	args_extract_flags(int argc, char **argv)
 {
 	t_flags	flags;
 	int		i;

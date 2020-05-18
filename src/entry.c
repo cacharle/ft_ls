@@ -6,7 +6,7 @@
 /*   By: charles <charles.cabergs@gmail.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/05/16 15:07:46 by charles           #+#    #+#             */
-/*   Updated: 2020/05/17 19:07:27 by charles          ###   ########.fr       */
+/*   Updated: 2020/05/18 15:36:28 by charles          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,18 @@ static char					*st_basename(char *path)
 	if ((slash_ptr = ft_strrchr(path, '/')) == NULL)
 		return (path);
 	return (slash_ptr + 1);
+}
+
+char	*st_date_str(const time_t *timep)
+{
+	char	*date_str;
+
+	date_str = ctime(timep);
+	date_str = ft_strchr(date_str, ' ') + 1;
+	if ((date_str = ft_strdup(date_str)) == NULL)
+		return (NULL);
+	*ft_strrchr(date_str, ':') = '\0';
+	return (date_str);
 }
 
 struct s_file_type_letter	g_file_types[] = {
@@ -65,7 +77,8 @@ static void					st_fill_mode(char mode_str[MODE_SIZE], mode_t mode)
 ** permissiosn links user group size date filename [-> linked]
 */
 
-bool						entry_push(char *filename, struct stat *statbuf, t_ftdstr *out, t_flags flags, unsigned int padding)
+bool						entry_push(
+		char *filename, struct stat *statbuf, t_ftdstr *out, t_flags flags, unsigned int padding)
 {
 	char			*tmp;
 	char			mode_str[MODE_SIZE];
@@ -77,7 +90,7 @@ bool						entry_push(char *filename, struct stat *statbuf, t_ftdstr *out, t_flag
 	{
 		if ((usr_result = getpwuid(statbuf->st_uid)) == NULL
 			|| (grp_result = getgrgid(statbuf->st_gid)) == NULL
-			|| (date = date_str(&statbuf->st_mtim.tv_sec)) == NULL)
+			|| (date = st_date_str(&statbuf->st_mtim.tv_sec)) == NULL)
 			return (false);
 		st_fill_mode(mode_str, statbuf->st_mode);
 		if (ft_asprintf(&tmp, " %d %s %s %*lu %s ",
@@ -99,48 +112,53 @@ bool						entry_push(char *filename, struct stat *statbuf, t_ftdstr *out, t_flag
 	return (true);
 }
 
-unsigned int	st_padding(struct stat *stats, size_t size)
+static unsigned int			st_max_padding_func(struct stat *stat, unsigned int max_len)
 {
-	size_t			i;
-	unsigned int	max_len;
 	unsigned int	len;
-	off_t			st_size;
+	off_t			tmp_size;
 
-	max_len = 0;
-	i = 0;
-	while (i < size)
+	if (stat->st_size == 0)
+		len = 1;
+	else
 	{
-		if (stats[i].st_size == 0)
-			len = 1;
-		else
+		len = 0;
+		tmp_size = stat->st_size;
+		while (tmp_size > 0)
 		{
-			len = 0;
-			st_size = stats[i].st_size;
-			while (st_size > 0)
-			{
-				st_size /= 10;
-				len++;
-			}
+			tmp_size /= 10;
+			len++;
 		}
-		if (len > max_len)
-			max_len = len;
-		i++;
 	}
-	return (max_len);
+	return (len > max_len ? len : max_len);
 }
 
-bool						entries_push(t_ftvec *filenames, struct stat *stats, t_ftdstr *out, t_flags flags)
-{
-	size_t	i;
-	unsigned int	padding;
+# define LS_BLOCK_SIZE 1024
 
-	order_filenames(filenames, stats, flags);
+static unsigned int			st_total_blocks_func(struct stat *stat, unsigned int blocks)
+{
+	return (blocks + (stat->st_blocks * stat->st_blksize / (8 * LS_BLOCK_SIZE)));
+}
+
+bool						entries_push(t_files *files, t_ftdstr *out, t_flags flags)
+{
+	size_t			i;
+	unsigned int	padding;
+	char			total_str[32];
+
+	if (files->size == 0)
+		return (true);
+	padding = 0;
 	if (flags & FLAG_LIST)
-		padding = st_padding(stats, filenames->size);
-	i = 0;
-	while (i < filenames->size)
 	{
-		if (!entry_push(filenames->data[i], stats + i, out, flags, padding))
+		ft_sprintf(total_str, "total %u\n", files_reduce_stats(files, st_total_blocks_func));
+		if (ft_dstrpush(out, total_str) == NULL)
+			return (false);
+		padding = files_reduce_stats(files, st_max_padding_func);
+	}
+	i = 0;
+	while (i < files->size)
+	{
+		if (!entry_push(files->names->data[i], files->stats + i, out, flags, padding))
 			return (false);
 		i++;
 	}
